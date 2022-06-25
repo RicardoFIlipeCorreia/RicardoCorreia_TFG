@@ -359,7 +359,7 @@ void handleCardDetected() {
       Serial.print("  UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
       Serial.print("  UID Value: ");
       nfc.PrintHex(uid, uidLength);
-      numPerC++;//-----------------------------------------------------------------------------------------------------------------------------AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+      numPerC++;//Presence counter ++
       Serial.println(numPerC);
       tb.sendTelemetryFloat("Presence", numPerC);
       if (uidLength == 4)
