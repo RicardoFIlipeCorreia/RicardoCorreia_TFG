@@ -45,6 +45,7 @@ long timeLastCardRead = 0;
 boolean readerDisabled = false;
 int irqCurr;
 int irqPrev;
+int numPerC;
 
 // This example uses the IRQ line, which is available when in I2C mode.
 Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
@@ -128,6 +129,8 @@ void setup() {//----------------------------------------------------------------
   // configure board to read RFID tags
   nfc.SAMConfig();
 
+  numPerC = 0;
+  
   startListeningToNFC();
   //----------------------------------------------------------
  
@@ -356,7 +359,9 @@ void handleCardDetected() {
       Serial.print("  UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
       Serial.print("  UID Value: ");
       nfc.PrintHex(uid, uidLength);
-      
+      numPerC++;//-----------------------------------------------------------------------------------------------------------------------------AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+      Serial.println(numPerC);
+      tb.sendTelemetryFloat("Presence", numPerC);
       if (uidLength == 4)
       {
         // We probably have a Mifare Classic card ... 
@@ -393,10 +398,8 @@ void func_Matrix_LED( void * pvParameters ){
       done = false;
     lastScreen = millis();
     
-    temperatureMatrix();
-    
-    stringo = "Humedad: % ";
-    StringWarningsMatrix(stringo);
+    temperatureMatrix(); 
+    humedadMatrix();
     
     if(airSensor.getCO2() > 1000){
       exclamationBlinkMatrix(3);
@@ -468,8 +471,32 @@ void temperatureMatrix(){
       letter--;
       x -= width;
     }
-    matrix.drawRect(((width+spacer)*(String(temp).length()+1))-i-1,y,3,3,1); //Simbolo de grados no funciona
-    matrix.drawChar((3+(width+spacer)*(String(temp).length()+1))-i, y, 'C', 7, 0, 1); //Asi q se dibuja a mano
+    matrix.drawRect(((width+spacer)*(String(temp).length()+1))-i-1,y,3,3,1); //Degree symbol since it doesn't work
+    matrix.drawChar((3+(width+spacer)*(String(temp).length()+1))-i, y, 'C', 7, 0, 1); //So we draw it manually
+    matrix.write(); 
+    delay(100);
+  }
+}
+
+void humedadMatrix(){
+  int hum = airSensor.getHumidity();
+  String my_string = String(hum) + "% ";   // This text will be displayed, a letter a time
+  //Draw scrolling text
+  int spacer = 1;                            // This will scroll the string
+  int width = 5 + spacer;                    // The font width is 5 pixels
+  for ( int i = 0 ; i < width * my_string.length() + width - 1 - spacer; i++ ) {
+    matrix.fillScreen(0);
+    int letter = i / width;
+    int x = (matrix.width() - 1) - i % width;
+    int y = ((matrix.height() - 8) / 2); 
+
+    while ( x + width - spacer >= 0 && letter >= 0 ) {
+      if ( letter < my_string.length() ) {
+        matrix.drawChar(x, y, my_string[letter], 1, 0, 1);
+      }
+      letter--;
+      x -= width;
+    }
     matrix.write(); 
     delay(100);
   }
